@@ -1,0 +1,6 @@
+/venv
+/EpamPython2019
+/.idea
+*.txt
+__pycache__/
+lec_1/
