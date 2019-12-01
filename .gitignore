@@ -1,6 +1,6 @@
 /venv
 /EpamPython2019
 /.idea
-*.txt
 __pycache__/
-lec_1/
+draft.py
+for_me.json
