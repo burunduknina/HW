@@ -4,3 +4,4 @@
 __pycache__/
 draft.py
 for_me.json
+*.md
