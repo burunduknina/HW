@@ -30,14 +30,12 @@ def print_result(func):
 
 
 def my_update_wrapper(func_wrapped):
-    def wrapper(func_wrapper):
-        def inner_wrapper():
-            functools.update_wrapper(
-                wrapper=func_wrapper, wrapped=func_wrapped)
-            func_wrapper.__original_func = func_wrapped
-            return func_wrapper
-        return inner_wrapper()
-    return wrapper
+    def inner_wrapper(func_wrapper):
+        func_wrapper.__doc__ = func_wrapped.__doc__
+        func_wrapper.__name__ = func_wrapped.__name__
+        func_wrapper.__original_func = func_wrapped
+        return func_wrapper
+    return inner_wrapper
 
 
 @print_result

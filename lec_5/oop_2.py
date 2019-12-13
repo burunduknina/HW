@@ -60,10 +60,8 @@ class Person:
         self.first_name = first_name
 
 
-class DeadlineError(ValueError):
-
-    def __init__(self, message):
-        self.message = message
+class DeadlineError(Exception):
+    """Error if homework is done too late """
 
 
 class Homework:
@@ -81,12 +79,11 @@ class HomeworkResult:
 
     def __init__(self, author, homework, solution):
         if not isinstance(homework, Homework):
-            raise ValueError('You gave a not Homework object')
-        else:
-            self.homework = homework
-            self.author = author
-            self.solution = solution
-            self.created = datetime.datetime.now()
+            raise TypeError('You gave a not Homework object')
+        self.homework = homework
+        self.author = author
+        self.solution = solution
+        self.created = datetime.datetime.now()
 
 
 class Student(Person):
@@ -107,22 +104,20 @@ class Teacher(Person):
 
     @staticmethod
     def check_homework(homework_result):
-        if len(homework_result.solution) > 5:
+        if len(homework_result.solution) > 4:
             Teacher.homework_done[
                 homework_result.homework].add(homework_result)
             return True
         elif len(homework_result.solution) < 5:
             return False
-        else:
-            raise ValueError('Panic! You broke the system! Did you know that 5'
-                             ' is the only odd untouchable number?')
 
     @staticmethod
     def reset_results(homework=None):
         if homework:
-            del Teacher.homework_done[homework]
+            if homework in Teacher.homework_done.keys():
+                del Teacher.homework_done[homework]
         else:
-            Teacher.homework_done = defaultdict(set)
+            Teacher.homework_done.clear()
 
 
 if __name__ == '__main__':
