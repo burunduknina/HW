@@ -16,7 +16,7 @@ import math
 
 class Quaternion:
 
-    def __init__(self, a, b, c, d):
+    def __init__(self, a, b=0, c=0, d=0):
         self.real = a
         self.i = b
         self.j = c
@@ -29,8 +29,8 @@ class Quaternion:
         return f'Quaternion({self.real}, {self.i}, {self.j}, {self.k})'
 
     def __add__(self, other):
-        if isinstance(other, float) or isinstance(other, int):
-            return Quaternion(self.real * other, self.i, self.j, self.k)
+        if isinstance(other, (int, float)):
+            return Quaternion(self.real + other, self.i, self.j, self.k)
         elif isinstance(other, Quaternion):
             a = self.real + other.real
             b = self.i + other.i
@@ -38,10 +38,10 @@ class Quaternion:
             d = self.k + other.k
             return Quaternion(a, b, c, d)
         else:
-            raise ValueError('This type is not supported')
+            raise TypeError('This type is not supported')
 
     def __mul__(self, other):
-        if isinstance(other, float) or isinstance(other, int):
+        if isinstance(other, (int, float)):
             return Quaternion(self.real * other, self.i * other,
                               self.j * other, self.k * other)
         elif isinstance(other, Quaternion):
@@ -66,22 +66,22 @@ class Quaternion:
                 self.norm() ** 2)
 
     def __truediv__(self, other):
-        if isinstance(other, float) or isinstance(other, int):
+        if isinstance(other, (int, float)):
             return Quaternion(self.real / other, self.i / other,
                               self.j / other, self.k / other)
         elif isinstance(other, Quaternion):
             return self * other.convert()
         else:
-            raise ValueError('This type is not supported')
+            raise TypeError('This type is not supported')
 
     def __eq__(self, other):
-        if all([isinstance(self, Quaternion), isinstance(other, Quaternion),
+        return all(
+            [
+                isinstance(self, Quaternion),
+                isinstance(other, Quaternion),
                 self.real == other.real,
                 self.i == other.i,
                 self.j == other.j,
                 self.k == other.k,
-                ]
-               ):
-            return True
-        else:
-            return False
+            ]
+        )

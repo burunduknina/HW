@@ -4,6 +4,7 @@ E - dict(<V> : [<V>, <V>, ...])
 значение - список вершин, достижимых из данной
 Сделать так, чтобы по графу можно было итерироваться(обходом в ширину)
 """
+import collections
 
 
 class Graph:
@@ -11,7 +12,7 @@ class Graph:
         if isinstance(E, dict):
             self.E = E
         else:
-            raise ValueError('')
+            raise TypeError('You gave a not dictionary object')
 
     def __iter__(self):
         marked = set()
@@ -19,9 +20,9 @@ class Graph:
             if key not in marked:
                 marked.add(key)
                 yield key
-                next_level = value
+                next_level = collections.deque(value)
                 while next_level:
-                    vert = next_level.pop(0)
+                    vert = next_level.popleft()
                     if vert not in marked:
                         marked.add(vert)
                         next_level.extend(self.E.get(vert, []))
