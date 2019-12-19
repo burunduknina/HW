@@ -2,9 +2,13 @@
 Написать тесты(pytest or unittest) к предыдущим 2 заданиям, запустив которые, я бы смог бы проверить их корректность
 Обязательно проверить всю критическую функциональность
 """
+import time
+import uuid
+
 import pytest
 
 from .task1 import SiamMeta
+from .task2 import timer_property
 
 
 class TestSiamMeta:
@@ -148,3 +152,166 @@ class TestSiamMeta:
         """
         unit_1 = self.class_1('1', '2', a=1)
         assert len(self.class_2.pool) == 0
+
+
+class TestTimerPropertyFunc:
+    def setup(self):
+        class Message:
+
+            def msg_get(self):
+                self._msg = self.get_message()
+                return self._msg
+
+            def msg_set(self, param):
+                self._msg = param
+
+            def msg_del(self):
+                self._msg = None
+
+            def get_message(self):
+                """
+                Return random string
+                """
+                return uuid.uuid4()
+
+            msg = timer_property(t=1)(msg_get, msg_set, msg_del)
+
+        self.message_class = Message
+
+    def test_get_method(self):
+        """
+        Check that __get__ save data and refresh it after timeout.
+        """
+        message = self.message_class()
+        initial = message.msg
+        assert initial is message.msg, "Data is not saved to cash"
+        time.sleep(1)
+        assert initial is not message.msg,\
+            "Data is not refreshed after timeout"
+
+    def test_set_method(self):
+        """
+        Check that __set__ save new data and reset timer.
+        """
+        message = self.message_class()
+        initial = message.msg
+        message.msg = 'test'
+        assert message._msg is 'test', 'Data is not saved to attribute'
+        assert message.msg is not initial, 'Timer is not reset'
+
+    def test_delete_method(self):
+        """
+        Check that __delete__ set value to None data and reset timer.
+        """
+        message = self.message_class()
+        initial = message.msg
+        del message.msg
+        assert message._msg is None
+        assert message.msg is not initial
+
+
+class TestTimerPropertyDecorators:
+    def setup(self):
+        class Message:
+            @timer_property(t=1)
+            def msg(self):
+                self._msg = self.get_message()
+                return self._msg
+
+            @msg.setter  # reset timer also
+            def msg(self, param):
+                self._msg = param
+
+            @msg.deleter
+            def msg(self):
+                self._msg = None
+
+            def get_message(self):
+                """
+                Return random string
+                """
+                return uuid.uuid4()
+
+        self.message_class = Message
+
+    def test_getter_method(self):
+        """
+        Check that __getter__ call __get__ method.
+        """
+        message = self.message_class()
+        initial = message.msg
+        assert initial is message.msg, "Data is not saved to cash"
+        time.sleep(1)
+        assert initial is not message.msg,\
+            "Data is not refreshed after timeout"
+
+    def test_setter_method(self):
+        """
+        Check that __setter__ call __set__ method.
+        """
+        message = self.message_class()
+        initial = message.msg
+        message.msg = 'test'
+        assert message._msg is 'test', 'Data is not saved to attribute'
+        assert message.msg is not initial, 'Timer is not reset'
+
+    def test_deleter_method(self):
+        """
+        Check that __setter__ call __set__ method.
+        """
+        message = self.message_class()
+        initial = message.msg
+        del message.msg
+        assert message._msg is None
+        assert message.msg is not initial
+
+
+class TestTimerPropertyNotDefined:
+    def setup(self):
+        class Message:
+            msg = timer_property(t=1)()
+
+            def msg_get(self):
+                self._msg = self.get_message()
+                return self._msg
+
+            def msg_set(self, param):
+                self._msg = param
+
+            def msg_del(self):
+                self._msg = None
+
+            def get_message(self):
+                """
+                Return random string
+                """
+                return uuid.uuid4()
+
+        self.message_class = Message
+
+    def test_get_not_defined(self):
+        """
+        Check that not defined __get__ is handled correctly.
+        """
+        message = self.message_class()
+        with pytest.raises(AttributeError) as exc:
+            message.msg
+        assert "can't read attr" in str(exc.value)
+
+    def test_set_not_defined(self):
+        """
+        Check that not defined __set__ is handled correctly.
+        """
+        message = self.message_class()
+        with pytest.raises(AttributeError) as exc:
+            message.msg = 'test'
+        assert "can't set attr" in str(exc.value)
+
+    def test_delete_not_defined(self):
+        """
+        Check that not defined __delete__ is handled correctly.
+        """
+        message = self.message_class()
+        with pytest.raises(AttributeError) as exc:
+            del message.msg
+        assert "can't del attr" in str(exc.value)
