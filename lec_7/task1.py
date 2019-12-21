@@ -25,8 +25,8 @@ True
 1
 
 """
-import weakref
 import inspect
+import weakref
 
 
 class SiamMeta(type):
