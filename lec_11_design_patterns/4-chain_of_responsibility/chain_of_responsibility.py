@@ -11,19 +11,21 @@
 В итоге мы должны получить список недостающих ингридиентов.
 """
 from abc import ABC, abstractmethod
+from enum import Enum
 
 
-EGGS = 2
-FLOUR = 300
-MILK = 500
-SUGAR = 100
-OIL = 10
-BUTTER = 120
+class Ingredients(Enum):
+    EGGS = 2
+    FLOUR = 300
+    MILK = 500
+    SUGAR = 100
+    OIL = 10
+    BUTTER = 120
 
 
 def ingredient_handler(refrigerator, ingredient_name):
     amount = refrigerator.content.get(ingredient_name)
-    recipe_amount = globals()[ingredient_name.upper()]
+    recipe_amount = Ingredients[ingredient_name.upper()].value
     if not amount:
         print(f'{ingredient_name} - {recipe_amount}')
     elif amount < recipe_amount:

@@ -109,7 +109,11 @@ class Adapter:
         return self.handler.get_documents(document_ids)
 
     def upload_documents(self, documents):
-        docs = [re.sub(r'\.\w+$', '.json', doc) for doc in documents]
+        docs = [
+            re.sub(r'\.\w+$', '.json', doc)
+            for doc in documents
+            if re.search(r'\.\w+$', doc).group(0) == '.xml'
+        ]
         return self.handler.upload_documents(docs)
 
 

@@ -18,7 +18,9 @@ class DayException(Exception):
 class AbstractMenu(ABC):
     @abstractmethod
     def __init__(self):
-        pass
+        first_course = None
+        second_course = None
+        drink = None
 
     def get_first_course(self, day):
         print('first course: ', self.first_course[day])
@@ -32,6 +34,7 @@ class AbstractMenu(ABC):
 
 class VeganMenu(AbstractMenu):
     def __init__(self, menu):
+        super().__init__()
         self.first_course = {
             key: value['first_courses']['vegan']
             for key, value in menu.items()
@@ -48,6 +51,7 @@ class VeganMenu(AbstractMenu):
 
 class ChildMenu(AbstractMenu):
     def __init__(self, menu):
+        super().__init__()
         self.first_course = {
             key: value['first_courses']['child']
             for key, value in menu.items()
@@ -64,6 +68,7 @@ class ChildMenu(AbstractMenu):
 
 class ChineseMenu(AbstractMenu):
     def __init__(self, menu):
+        super().__init__()
         self.first_course = {
             key: value['first_courses']['chinese']
             for key, value in menu.items()
