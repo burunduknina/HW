@@ -1,58 +1,100 @@
+"""HW for lecture#11 'OO-design.'"""
 from abc import ABC, abstractmethod
 from collections import deque
 from functools import reduce
 
-
-class InaccessibleMethodError(Exception):
-    """
-    Error if method is not allowed in this point.
-    """
+from lec_11_OO_design.transport_logger import LOGGER
 
 
 class Point(ABC):
+    """Interface for location"""
 
     def __init__(self, containers=[], transport=[], distance=0):
+        """
+        :param (list, optional) containers: list of containers
+        :param (list, optional) transport: list of transport
+        :param (int, optional) distance: distance to the previous point
+        """
         self._storage = deque(containers)
         self._garage = transport
         self._distance = distance
         super().__init__()
+        LOGGER.info(f'{self.__class__.__name__} with distance '
+                    f'{self._distance} and {len(self._storage)} '
+                    f'containers is created.')
 
     def get_time(self):
+        """Calculates the time at which the last container arrived.
+        :return:
+            int: time to deliver containers to this point
+        """
         return self._storage and reduce(
             max, [container.time for container in self._storage]) or 0
 
-    def send_container(self, destination):
-        container = self._storage.popleft()
-        transport = self.get_transport()
-        start_time = max(container.time, transport.time)
-        container.time = start_time + destination.distance
-        transport.time = start_time + 2 * destination.distance
-        destination.add_container(container)
-
-    def add_container(self, container):
-        return self._storage.append(container)
-
-    @abstractmethod
     def get_transport(self):
-        pass
+        """Calculates what transport can start earlier.
+        :return:
+            Transport: transport to deliver next container
+        """
+        return self._garage
 
     @property
     def distance(self):
+        """
+        :return:
+            int: distance to the previous point.
+        """
         return self._distance
 
     @property
     def containers(self):
+        """
+        :return:
+            list: container in storage.
+        """
         return self._storage
 
     @property
     def ready(self):
+        """
+        :return:
+            Container: container ready to start.
+        """
         return self._storage[0]
 
 
-class Factory(Point):
+class AddContainerMixin:
+    """Mixin for Point to add containers."""
 
     def add_container(self, container):
-        raise InaccessibleMethodError("We can't add containers to this point")
+        """Add container to Points storage
+        :param (Container) container: container to add
+        """
+        self._storage.append(container)
+
+
+class SendContainerMixin:
+    """Mixin for Point to send containers."""
+
+    def send_container(self, destination):
+        """Send container to other Point
+        :param (Point) destination: where to send
+        """
+        container = self._storage.popleft()
+        transport = self.get_transport()
+        start_time = max(container.time, transport.time)
+        LOGGER.info(f'Container {container.destination} started from '
+                    f'{self.__class__.__name__} to '
+                    f'{destination.__class__.__name__} at {start_time}')
+        container.time = start_time + destination.distance
+        transport.time = start_time + 2 * destination.distance
+        destination.add_container(container)
+        LOGGER.info(f'Container {container.destination} delivered from to '
+                    f'{destination.__class__.__name__} at {container.time}')
+
+
+class Factory(Point, SendContainerMixin):
+    """Factory: starting point."""
 
     def get_transport(self):
         min_trans = self._garage[0]
@@ -62,23 +104,18 @@ class Factory(Point):
         return min_trans
 
 
-class Port(Point):
+class Port(Point, AddContainerMixin, SendContainerMixin):
+    """Port: intermediate point."""
+    pass
 
-    def get_transport(self):
-        return self._garage
 
-
-class Warehouse(Point):
-
-    def get_transport(self):
-        raise InaccessibleMethodError("There is no transport at this point")
-
-    def send_container(self, destination):
-        raise InaccessibleMethodError(
-            "We can't send containers from this destination")
+class Warehouse(Point, AddContainerMixin):
+    """Warehouse: final destination."""
+    pass
 
 
 class Transport(ABC):
+    """Interface for transport"""
 
     def __init__(self):
         self._busy_time = 0
@@ -93,20 +130,31 @@ class Transport(ABC):
 
 
 class Truck(Transport):
+    """Truck: Transport for roads."""
     pass
 
 
 class Ship(Transport):
+    """Ship: Transport for sea."""
     pass
 
 
 class Container:
+    """Container"""
+
     def __init__(self, destination):
+        """
+        :param (str) destination: end point
+        """
         self._destination = destination
         self._arrival_time = 0
 
     @property
     def time(self):
+        """
+        :return:
+            int: arrival time.
+        """
         return self._arrival_time
 
     @time.setter
@@ -115,23 +163,42 @@ class Container:
 
     @property
     def destination(self):
+        """
+        :return:
+            str: final destination
+        """
         return self._destination
 
 
 class Dispatcher(ABC):
+    """Interface to delivering."""
 
     @abstractmethod
     def deliver_containers(self):
+        """Deliver containers from start to final destination."""
         pass
 
     @abstractmethod
     def get_result_time(self):
+        """
+        Calculate time to delivery.
+        :return:
+            int: time to delivery
+        """
         pass
 
 
 class HWTaskDispatcher(Dispatcher):
+    """Solution of HW task."""
 
     def __init__(self, distance_port, distance_a, distance_b, containers):
+        """
+        :param (int) distance_port: distance from Factory to Port
+        :param (int) distance_a: distance from Port to WarehouseA
+        :param (int) distance_b: distance from Port to WarehouseB
+        :param (str) containers: Container sequence
+        """
+        LOGGER.info(f'Containers to delivery: {containers}')
         self._warehouse_a = Warehouse(distance=distance_a)
         self._warehouse_b = Warehouse(distance=distance_b)
         self._containers = [Container(dest) for dest in containers]
@@ -154,7 +221,11 @@ class HWTaskDispatcher(Dispatcher):
 
 
 if __name__ == '__main__':
+    LOGGER.info("Program started")
     dispatcher = HWTaskDispatcher(1, 4, 5, input(
         'Please, enter container sequence:\n'))
     dispatcher.deliver_containers()
-    print('Delivery time:', dispatcher.get_result_time())
+    delivery_time = dispatcher.get_result_time()
+    print('Delivery time:', delivery_time)
+    LOGGER.info(f'All containers delivered at {delivery_time}')
+    LOGGER.info("Program finished")
