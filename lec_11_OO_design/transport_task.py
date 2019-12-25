@@ -9,14 +9,14 @@ from lec_11_OO_design.transport_logger import LOGGER
 class Point(ABC):
     """Interface for location"""
 
-    def __init__(self, containers=[], transport=[], distance=0):
+    def __init__(self, containers=None, transport=None, distance=0):
         """
         :param (list, optional) containers: list of containers
         :param (list, optional) transport: list of transport
         :param (int, optional) distance: distance to the previous point
         """
-        self._storage = deque(containers)
-        self._garage = transport
+        self._storage = containers and deque(containers) or deque([])
+        self._garage = transport or []
         self._distance = distance
         super().__init__()
         LOGGER.info(f'{self.__class__.__name__} with distance '
@@ -38,6 +38,13 @@ class Point(ABC):
         """
         return self._garage
 
+    def get_containers(self):
+        """Return list of containers in the storage.
+        :return:
+            deque: container in storage.
+        """
+        return self._storage
+
     @property
     def distance(self):
         """
@@ -45,14 +52,6 @@ class Point(ABC):
             int: distance to the previous point.
         """
         return self._distance
-
-    @property
-    def containers(self):
-        """
-        :return:
-            list: container in storage.
-        """
-        return self._storage
 
     @property
     def ready(self):
@@ -70,7 +69,7 @@ class AddContainerMixin:
         """Add container to Points storage
         :param (Container) container: container to add
         """
-        self._storage.append(container)
+        self.get_containers().append(container)
 
 
 class SendContainerMixin:
@@ -80,7 +79,7 @@ class SendContainerMixin:
         """Send container to other Point
         :param (Point) destination: where to send
         """
-        container = self._storage.popleft()
+        container = self.get_containers().popleft()
         transport = self.get_transport()
         start_time = max(container.time, transport.time)
         LOGGER.info(f'Container {container.destination} started from '
@@ -93,7 +92,7 @@ class SendContainerMixin:
                     f'{destination.__class__.__name__} at {container.time}')
 
 
-class Factory(Point, SendContainerMixin):
+class Factory(SendContainerMixin, Point):
     """Factory: starting point."""
 
     def get_transport(self):
@@ -104,12 +103,12 @@ class Factory(Point, SendContainerMixin):
         return min_trans
 
 
-class Port(Point, AddContainerMixin, SendContainerMixin):
+class Port(AddContainerMixin, SendContainerMixin, Point):
     """Port: intermediate point."""
     pass
 
 
-class Warehouse(Point, AddContainerMixin):
+class Warehouse(AddContainerMixin, Point,):
     """Warehouse: final destination."""
     pass
 
@@ -208,12 +207,12 @@ class HWTaskDispatcher(Dispatcher):
         self._port = Port([], self._ship, distance_port)
 
     def deliver_containers(self):
-        for idx in range(len(self._factory.containers)):
+        for idx in range(len(self._factory.get_containers())):
             if self._factory.ready.destination == 'A':
                 self._factory.send_container(self._port)
             else:
                 self._factory.send_container(self._warehouse_b)
-        for idx in range(len(self._port.containers)):
+        for idx in range(len(self._port.get_containers())):
             self._port.send_container(self._warehouse_a)
 
     def get_result_time(self):
