@@ -1,6 +1,5 @@
 """HW for lecture#11 'OO-design.'"""
 from abc import ABC, abstractmethod
-from collections import deque
 from functools import reduce
 
 from lec_11_OO_design.transport_logger import LOGGER
@@ -9,15 +8,18 @@ from lec_11_OO_design.transport_logger import LOGGER
 class Point(ABC):
     """Interface for location"""
 
-    def __init__(self, containers=None, transport=None, distance=0):
+    def __init__(
+            self, containers=None, transport=None, distance=0, routs=None):
         """
         :param (list, optional) containers: list of containers
         :param (list, optional) transport: list of transport
         :param (int, optional) distance: distance to the previous point
+        :param (dict, optional) distance: distance to the previous point
         """
-        self._storage = containers and deque(containers) or deque([])
+        self._storage = containers or []
         self._garage = transport or []
         self._distance = distance
+        self._routs = routs
         super().__init__()
         LOGGER.info(f'{self.__class__.__name__} with distance '
                     f'{self._distance} and {len(self._storage)} '
@@ -41,9 +43,16 @@ class Point(ABC):
     def get_containers(self):
         """Return list of containers in the storage.
         :return:
-            deque: container in storage.
+            list: container in storage.
         """
         return self._storage
+
+    def get_routs(self):
+        """Return dict of routs from this point.
+        :return:
+            dict: possible destinations.
+        """
+        return self._routs
 
     @property
     def distance(self):
@@ -75,12 +84,12 @@ class AddContainerMixin:
 class SendContainerMixin:
     """Mixin for Point to send containers."""
 
-    def send_container(self, destination):
+    def send_container(self):
         """Send container to other Point
-        :param (Point) destination: where to send
         """
-        container = self.get_containers().popleft()
-        transport = self.get_transport()
+        container = self.get_containers().pop(0)
+        transport = self.get_transport_to_send()
+        destination = self.get_routs().get(container.destination)
         start_time = max(container.time, transport.time)
         LOGGER.info(f'Container {container.destination} started from '
                     f'{self.__class__.__name__} to '
@@ -92,20 +101,43 @@ class SendContainerMixin:
                     f'{destination.__class__.__name__} at {container.time}')
 
 
-class Factory(SendContainerMixin, Point):
-    """Factory: starting point."""
+class GetTransportMixin:
+    """Mixin for select transport."""
 
-    def get_transport(self):
-        min_trans = self._garage[0]
-        for transport in self._garage:
+    def get_transport_to_send(self):
+        """Calculates what transport can start earlier.
+        :return:
+            Transport: transport to deliver next container
+        """
+        min_trans = self.get_transport()[0]
+        for transport in self.get_transport():
             if transport.time < min_trans.time:
                 min_trans = transport
         return min_trans
 
 
-class Port(AddContainerMixin, SendContainerMixin, Point):
+class Factory(GetTransportMixin, SendContainerMixin, Point):
+    """Factory: starting point."""
+
+    def send_containers(self):
+        """Send all containers to next Point
+        """
+        for i in range(len(self.get_containers())):
+            self.send_container()
+
+
+class Port(GetTransportMixin, AddContainerMixin, SendContainerMixin, Point):
     """Port: intermediate point."""
-    pass
+
+    def sort_containers(self):
+        self._storage.sort(key=lambda x: x.time)
+
+    def send_containers(self):
+        """Send all containers to next Point
+        """
+        self.sort_containers()
+        for i in range(len(self.get_containers())):
+            self.send_container()
 
 
 class Warehouse(AddContainerMixin, Point,):
@@ -187,44 +219,100 @@ class Dispatcher(ABC):
         pass
 
 
-class HWTaskDispatcher(Dispatcher):
-    """Solution of HW task."""
+# class HWTaskDispatcher(Dispatcher):
+#     """Solution of HW task."""
+#
+#     def __init__(self, distance_port, distance_a, distance_b, containers):
+#         """
+#         :param (int) distance_port: distance from Factory to Port
+#         :param (int) distance_a: distance from Port to WarehouseA
+#         :param (int) distance_b: distance from Port to WarehouseB
+#         :param (str) containers: Container sequence
+#         """
+#         LOGGER.info(f'Containers to delivery: {containers}')
+#         self._warehouse_a = Warehouse(distance=distance_a)
+#         self._warehouse_b = Warehouse(distance=distance_b)
+#         self._containers = [Container(dest) for dest in containers]
+#         self._truck1, self._truck2 = Truck(), Truck()
+#         self._ship = Ship()
+#         self._factory = Factory(
+#             self._containers, [self._truck1, self._truck2])
+#         self._port = Port([], self._ship, distance_port)
+#
+#     def deliver_containers(self):
+#         for idx in range(len(self._factory.get_containers())):
+#             if self._factory.ready.destination == 'A':
+#                 self._factory.send_container(self._port)
+#             else:
+#                 self._factory.send_container(self._warehouse_b)
+#         for idx in range(len(self._port.get_containers())):
+#             self._port.send_container(self._warehouse_a)
+#
+#     def get_result_time(self):
+#         return max(
+#         self._warehouse_a.get_time(), self._warehouse_b.get_time())
+#
 
-    def __init__(self, distance_port, distance_a, distance_b, containers):
+class HWTaskDispatcherPlus(Dispatcher):
+    """Solution of HW+ task."""
+
+    def __init__(self, warehouses, ports, factories, containers):
         """
-        :param (int) distance_port: distance from Factory to Port
-        :param (int) distance_a: distance from Port to WarehouseA
-        :param (int) distance_b: distance from Port to WarehouseB
-        :param (str) containers: Container sequence
+        :param (dict) warehouses: dict{warehouse_name: distance}
+        :param (dict) ports: dict{port_name: [distance, amount of ships]}
+        :param (list) factories: list[[destinations, amount of tracks]]
+        :param (list) containers: list[str]
         """
         LOGGER.info(f'Containers to delivery: {containers}')
-        self._warehouse_a = Warehouse(distance=distance_a)
-        self._warehouse_b = Warehouse(distance=distance_b)
-        self._containers = [Container(dest) for dest in containers]
-        self._truck1, self._truck2 = Truck(), Truck()
-        self._ship = Ship()
-        self._factory = Factory(self._containers, [self._truck1, self._truck2])
-        self._port = Port([], self._ship, distance_port)
+        self.warehouses = {key: Warehouse(
+            distance=value) for key, value in warehouses.items()}
+        ships = {key: [Ship() for i in range(
+            value[1])] for key, value in ports.items()}
+        self.ports = {key: Port([], ships.get(key), value[0], {
+            key: self.warehouses.get(key)}) for key, value in ports.items()}
+        self.factories = []
+        for i, factory in enumerate(factories):
+            factory_containers = [Container(dest) for dest in containers[i]]
+            factory_trucks = [Truck() for i in range(factory[1])]
+            factory_routs = {key: self.ports.get(key) or self.warehouses.get(
+                key) for key in factory[0]}
+            self.factories.append(Factory(
+                factory_containers, factory_trucks, 0, factory_routs))
 
     def deliver_containers(self):
-        for idx in range(len(self._factory.get_containers())):
-            if self._factory.ready.destination == 'A':
-                self._factory.send_container(self._port)
-            else:
-                self._factory.send_container(self._warehouse_b)
-        for idx in range(len(self._port.get_containers())):
-            self._port.send_container(self._warehouse_a)
+        for factory in self.factories:
+            factory.send_containers()
+        for port in self.ports.values():
+            port.send_containers()
 
     def get_result_time(self):
-        return max(self._warehouse_a.get_time(), self._warehouse_b.get_time())
+        return max([w.get_time() for w in self.warehouses.values()])
 
 
 if __name__ == '__main__':
     LOGGER.info("Program started")
-    dispatcher = HWTaskDispatcher(1, 4, 5, input(
-        'Please, enter container sequence:\n'))
-    dispatcher.deliver_containers()
-    delivery_time = dispatcher.get_result_time()
-    print('Delivery time:', delivery_time)
-    LOGGER.info(f'All containers delivered at {delivery_time}')
+    warehouses1 = {'A': 4, 'B': 5}
+    ports1 = {'A': [1, 1]}
+    factories1 = [['AB', 2]]
+    containers1 = ['AABABBAB']
+    warehouses2 = {'A': 5, 'B': 4}
+    ports2 = {'B': [1, 1]}
+    factories2 = [['AB', 2], ['B', 2]]
+    containers2 = ['AAB', 'BB']
+    # dispatcher = HWTaskDispatcher(1, 4, 5, input(
+    #     'Please, enter container sequence:\n'))
+    dispatcher1 = HWTaskDispatcherPlus(
+        warehouses1, ports1, factories1, containers1)
+    dispatcher1.deliver_containers()
+    delivery_time1 = dispatcher1.get_result_time()
+    print(f'Delivery time for hw task and input '
+          f'{containers1[0]}: {delivery_time1}')
+    LOGGER.info(f'All containers delivered at {delivery_time1}')
+    dispatcher2 = HWTaskDispatcherPlus(
+        warehouses2, ports2, factories2, containers2)
+    dispatcher2.deliver_containers()
+    delivery_time2 = dispatcher2.get_result_time()
+    print(f'Delivery time for hw+ task and input {containers2[0]},'
+          f' {containers2[1]} : {delivery_time2}')
+    LOGGER.info(f'All containers delivered at {delivery_time2}')
     LOGGER.info("Program finished")
