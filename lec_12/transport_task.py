@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from functools import reduce
 
-from lec_11_OO_design.transport_logger import LOGGER
+from lec_12.transport_logger import LOGGER
 
 
 class Point(ABC):
