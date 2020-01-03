@@ -21,7 +21,7 @@ class PrintableFolder:
 
     @staticmethod
     def point(name):
-        return re.findall(r'\\.[^\\]*$', name)[0][1:]
+        return re.findall(r'/.[^/]*$', name)[0][1:]
 
     @staticmethod
     def walking(name, walk='', result=[]):
@@ -33,11 +33,11 @@ class PrintableFolder:
                 ''.join([walk, 'V ', PrintableFolder.point(name), '\n']))
             walk = walk[:-2]
             if len(walk) > 0:
-                walk += '\t/'
+                walk += '\t|'
             else:
-                walk += '/'
+                walk += '|'
             for i in os.listdir(name):
-                PrintableFolder.walking(name+'\\'+i, walk + '->', result)
+                PrintableFolder.walking(name+'/'+i, walk + '->', result)
         return result
 
     @staticmethod
@@ -56,4 +56,4 @@ class PrintableFile:
         self.name = name
 
     def __str__(self):
-        return re.findall(r'\\.[^\\]*$', self.name)[0][1:]
+        return re.findall(r'/.[^/]*$', self.name)[0][1:]

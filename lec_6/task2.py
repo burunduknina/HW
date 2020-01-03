@@ -16,7 +16,7 @@ import math
 
 class Quaternion:
 
-    def __init__(self, a, b=0, c=0, d=0):
+    def __init__(self, a=0, b=0, c=0, d=0):
         self.real = a
         self.i = b
         self.j = c
@@ -45,14 +45,22 @@ class Quaternion:
             return Quaternion(self.real * other, self.i * other,
                               self.j * other, self.k * other)
         elif isinstance(other, Quaternion):
-            a = (self.real * other.real - self.i * other.i -
-                 self.j * other.j - self.k * self.k)
-            b = (self.real * other.i + self.i * other.real +
-                 self.j * other.k - self.k * other.j)
-            c = (self.real * other.j + self.j * other.real +
-                 self.k * other.i - self.i * other. k)
-            d = (self.real * other.k + self.k * other.real +
-                 self.j * other.j - self.j * other.i)
+            a = (self.real * other.real
+                 - self.i * other.i
+                 - self.j * other.j
+                 - self.k * other.k)
+            b = (self.real * other.i
+                 + self.i * other.real
+                 + self.j * other.k
+                 - self.k * other.j)
+            c = (self.real * other.j
+                 + self.j * other.real
+                 + self.k * other.i
+                 - self.i * other. k)
+            d = (self.real * other.k
+                 + self.k * other.real
+                 + self.i * other.j
+                 - self.j * other.i)
             return Quaternion(a, b, c, d)
         else:
             raise ValueError('This type is not supported')
@@ -62,13 +70,17 @@ class Quaternion:
             self.real ** 2 + self.i ** 2 + self.j ** 2 + self.k ** 2)
 
     def convert(self):
-        return Quaternion(self.real, - self.i, -self.j, -self.k) / (
-                self.norm() ** 2)
+        return Quaternion(
+            self.real, - self.i, -self.j, -self.k) / (self.norm() ** 2)
 
     def __truediv__(self, other):
         if isinstance(other, (int, float)):
-            return Quaternion(self.real / other, self.i / other,
-                              self.j / other, self.k / other)
+            return Quaternion(
+                self.real / other,
+                self.i / other,
+                self.j / other,
+                self.k / other
+            )
         elif isinstance(other, Quaternion):
             return self * other.convert()
         else:
