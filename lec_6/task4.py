@@ -17,6 +17,11 @@ import re
 
 class PrintableFolder:
     def __init__(self, name):
+        """
+        :param (str) name: absolute path to the folder:
+            like 'C:/Users/Nina/PycharmProjects/HW' for Win
+            or '/home/Nina/PycharmProjects/HW' for Linux
+        """
         self.name = name
 
     @staticmethod
@@ -53,6 +58,11 @@ class PrintableFolder:
 
 class PrintableFile:
     def __init__(self, name):
+        """
+        :param (str) name: absolute path to the file:
+            like 'C:/Users/Nina/PycharmProjects/HW/file.py' for Win
+            or '/home/Nina/PycharmProjects/HW/file.py' for Linux
+        """
         self.name = name
 
     def __str__(self):
