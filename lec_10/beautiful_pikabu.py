@@ -31,7 +31,7 @@ if __name__ == '__main__':
     }
 
     most_common_tags = pikabu_most_common_tags(input(
-        'Please, enter cookies to connect: '))
+        'Please, enter your value for "pkbRem" cookie for pikabu site: '))
     with open('pikabu_most_common_tags.txt', 'w', encoding='utf-8') as file:
         for tag in most_common_tags:
             file.write(f'{tag[0]}: {tag[1]}\n')
