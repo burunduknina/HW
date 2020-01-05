@@ -1,0 +1,6 @@
+1. Which system call will be used most often -read(47789 calls)
+2. Which part of the code is "hottest" - built-in method _hashlib.openssl_sha256()
+3. Which system call consumed the most time -read(28.80% of time)
+
+Statistics for 1 and 3 points: strace_find_file_by_hash.log
+Statistics for 2 point: cPython_find_file_by_hash.log
