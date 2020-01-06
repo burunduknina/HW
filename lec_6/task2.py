@@ -30,19 +30,19 @@ class Quaternion:
 
     def __add__(self, other):
         if isinstance(other, (int, float)):
-            return Quaternion(self.real + other, self.i, self.j, self.k)
+            return type(self)(self.real + other, self.i, self.j, self.k)
         elif isinstance(other, Quaternion):
             a = self.real + other.real
             b = self.i + other.i
             c = self.j + other.j
             d = self.k + other.k
-            return Quaternion(a, b, c, d)
+            return type(self)(a, b, c, d)
         else:
             raise TypeError('This type is not supported')
 
     def __mul__(self, other):
         if isinstance(other, (int, float)):
-            return Quaternion(self.real * other, self.i * other,
+            return type(self)(self.real * other, self.i * other,
                               self.j * other, self.k * other)
         elif isinstance(other, Quaternion):
             a = (self.real * other.real
@@ -61,7 +61,7 @@ class Quaternion:
                  + self.k * other.real
                  + self.i * other.j
                  - self.j * other.i)
-            return Quaternion(a, b, c, d)
+            return type(self)(a, b, c, d)
         else:
             raise ValueError('This type is not supported')
 
@@ -70,12 +70,12 @@ class Quaternion:
             self.real ** 2 + self.i ** 2 + self.j ** 2 + self.k ** 2)
 
     def convert(self):
-        return Quaternion(
+        return type(self)(
             self.real, - self.i, -self.j, -self.k) / (self.norm() ** 2)
 
     def __truediv__(self, other):
         if isinstance(other, (int, float)):
-            return Quaternion(
+            return type(self)(
                 self.real / other,
                 self.i / other,
                 self.j / other,

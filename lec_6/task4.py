@@ -29,7 +29,9 @@ class PrintableFolder:
         return re.findall(r'/.[^/]*$', name)[0][1:]
 
     @staticmethod
-    def walking(name, walk='', result=[]):
+    def walking(name, walk='', result=None):
+        if result is None:
+            result = []
         if os.path.isfile(name):
             result.append(
                 ''.join([walk, ' ', PrintableFolder.point(name), '\n']))
@@ -53,7 +55,7 @@ class PrintableFolder:
         return PrintableFolder.printable(PrintableFolder.walking(self.name))
 
     def __contains__(self, item):
-        return item.name.find(self.name) != -1
+        return item.name.find(f'{self.name}/') != -1
 
 
 class PrintableFile:

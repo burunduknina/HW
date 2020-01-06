@@ -3,5 +3,6 @@
 /.idea
 __pycache__/
 draft.py
-for_me.json
+for_me
+for_me.*
 *.md
