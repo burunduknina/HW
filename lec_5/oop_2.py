@@ -102,22 +102,21 @@ class Teacher(Person):
     def create_homework(text, deadline):
         return Homework(text, deadline)
 
-    @staticmethod
-    def check_homework(homework_result):
+    @classmethod
+    def check_homework(cls, homework_result):
         if len(homework_result.solution) > 4:
-            Teacher.homework_done[
+            cls.homework_done[
                 homework_result.homework].add(homework_result)
             return True
         elif len(homework_result.solution) < 5:
             return False
 
-    @staticmethod
-    def reset_results(homework=None):
+    @classmethod
+    def reset_results(cls, homework=None):
         if homework:
-            if homework in Teacher.homework_done.keys():
-                del Teacher.homework_done[homework]
+            cls.homework_done.pop(homework)
         else:
-            Teacher.homework_done.clear()
+            cls.homework_done.clear()
 
 
 if __name__ == '__main__':
